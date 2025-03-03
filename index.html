@@ -9,7 +9,7 @@
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=337 height=600></canvas>
+      <canvas id="unity-canvas" width=540 height=960></canvas>
       <div id="unity-loading-bar">
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
@@ -24,7 +24,6 @@
       </div>
     </div>
     <script>
-      var _unity = null;
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
       var loadingBar = document.querySelector("#unity-loading-bar");
@@ -57,11 +56,11 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/SlingshotBuild.loader.js";
+      var loaderUrl = buildUrl + "/WebGlBuild.loader.js";
       var config = {
-        dataUrl: buildUrl + "/SlingshotBuild.data",
-        frameworkUrl: buildUrl + "/SlingshotBuild.framework.js",
-        codeUrl: buildUrl + "/SlingshotBuild.wasm",
+        dataUrl: buildUrl + "/WebGlBuild.data",
+        frameworkUrl: buildUrl + "/WebGlBuild.framework.js",
+        codeUrl: buildUrl + "/WebGlBuild.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Slingshot",
@@ -90,12 +89,12 @@
         // performance, uncomment the following line:
         // config.devicePixelRatio = 1;
 
-        unityShowBanner('WebGL builds are not supported on mobile devices.');
+        // unityShowBanner('WebGL builds are not supported on mobile devices.');
       } else {
         // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
-        canvas.style.width = "337px";
-        canvas.style.height = "600px";
+        canvas.style.width = "540px";
+        canvas.style.height = "960px";
       }
 
       loadingBar.style.display = "block";
@@ -106,7 +105,6 @@
         createUnityInstance(canvas, config, (progress) => {
           progressBarFull.style.width = 100 * progress + "%";
         }).then((unityInstance) => {
-          _unity = unityInstance;
           loadingBar.style.display = "none";
           fullscreenButton.onclick = () => {
             unityInstance.SetFullscreen(1);
@@ -117,56 +115,25 @@
       };
       document.body.appendChild(script);
 
-      function GetUIDFromLocalStorage () {
-        var uid = localStorage.getItem("uid") || "No UID Found";
-        _unity.SendMessage("API", "OnUIDReceived", uid);
+      function resizeCanvas() {
+        let canvas = document.getElementById("unity-canvas");
+        let dvh = window.innerHeight; // Using JS as fallback for dvh
+        let vw = window.innerWidth;
+        let aspectRatio = 540 / 960;
+
+        if (vw < 768) { // Phone detection
+          canvas.style.width = "100vw";
+          canvas.style.height = "100dvh"; // Use dvh for better mobile fit
+        } else {
+          let newHeight = dvh;
+          let newWidth = newHeight * aspectRatio;
+          canvas.style.width = `${newWidth}px`;
+          canvas.style.height = `${newHeight}px`;
+        }
       }
 
-      // Function to generate or get a unique UID
-    function getOrCreateUID () {
-      let uid = localStorage.getItem("uid");
-      if (!uid) {
-        const uniqueString = () => `${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}${new Date().getHours().toString().padStart(2, '0')}${new Date().getMinutes().toString().padStart(2, '0')}${new Date().getSeconds().toString().padStart(2, '0')}${new Date().getMilliseconds().toString().padStart(3, '0')}${Math.floor(Math.random() * 9000) + 1000}`;
-
-        uid = uniqueString(); // Generate a new unique ID
-        localStorage.setItem("uid", uid);
-      }
-      return uid;
-    }
-
-    let uid = getOrCreateUID();
-    let startTime = Date.now(); // Store game start time
-
-    // Function to send the "Game Start" API call
-    function sendGameStart () {
-      fetch("http://116.68.200.97:6048/api/v1/start_game", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ "uid": uid })
-      })
-        .then(response => response.json())
-        .then(data => console.log("Game Start API Response:", data))
-        .catch(error => console.error("Error in Game Start API:", error));
-    }
-
-    // Function to send the "Game End" API call
-    function sendGameEnd () {
-      let playtime = Math.floor((Date.now() - startTime) / 1000); // Calculate playtime in seconds
-
-      navigator.sendBeacon("http://116.68.200.97:6048/api/v1/average_gameplay_duration", JSON.stringify({
-        "uid": uid,
-        "playtime": playtime
-      }));
-
-      console.log(`Game End API sent! UID: ${uid}, Playtime: ${playtime}s`);
-    }
-
-    // Call game start API when the page loads
-    window.addEventListener("load", sendGameStart);
-
-    // Call game end API when the page closes
-    window.addEventListener("beforeunload", sendGameEnd);
-
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas(); // Call once to set initial size
     </script>
   </body>
 </html>
