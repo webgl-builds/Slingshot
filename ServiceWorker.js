@@ -1,4 +1,4 @@
-const cacheName = "Rofuclav-Rofuclav Beats Bacteria-2.8";
+const cacheName = "Rofuclav-Rofuclav Beats Bacteria-3.0";
 const contentToCache = [
     "Build/Slingshot.loader.js",
     "Build/Slingshot.framework.js",
